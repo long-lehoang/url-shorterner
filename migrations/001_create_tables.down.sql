@@ -1,0 +1,4 @@
+DROP TABLE IF EXISTS analytics;
+DROP TABLE IF EXISTS urls;
+DROP EXTENSION IF EXISTS "uuid-ossp";
+

@@ -201,7 +201,7 @@ Route: `/metrics`
 
 # 5. Tech Stack
 
-* **Go 1.21+**
+* **Go 1.25+**
 * **Gin** (HTTP framework)
 * **Redis** (cache + rate limiting)
 * **Postgres** (persistent store)
