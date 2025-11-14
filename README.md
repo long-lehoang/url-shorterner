@@ -244,19 +244,111 @@ DOMAIN=https://short.ly
 
 * Postgres 15
 * Redis 7
-* App (Go)
+* API Service (Go)
+* Analytics Service (Go)
+* Migration Service (Go)
 
 ```bash
+# Start all services
 docker compose up --build
+
+# Or use Makefile
+make docker-up
 ```
+
+Services:
+- `migration` - Runs database migrations on startup
+- `api` - Main HTTP API server (port 8080)
+- `analytics` - Background analytics processing service
 
 ---
 
 # 9. Local Development
 
+## Prerequisites
+
+* Go 1.25+
+* Postgres 15+ (or use Docker Compose)
+* Redis 7+ (or use Docker Compose)
+
+## Setup
+
 ```bash
+# Install dependencies
 go mod tidy
-go run cmd/server/main.go
+
+# Run migrations
+make migrate
+# or
+go run ./cmd/migration
+
+# Run API server
+make run-api
+# or
+go run ./cmd/api
+
+# Run analytics service
+make run-analytics
+# or
+go run ./cmd/analytics
+```
+
+## Available Make Commands
+
+```bash
+# Build all services
+make build
+
+# Build individual services
+make build-api
+make build-analytics
+make build-migration
+
+# Run services locally
+make run-api
+make run-analytics
+make run-migration
+
+# Run migrations
+make migrate
+
+# Run tests
+make test
+
+# Run linter
+make lint
+
+# Docker commands
+make docker-up
+make docker-down
+
+# Clean build artifacts
+make clean
+```
+
+## Testing the API
+
+Once the API service is running (via `make run-api` or `docker compose up`), test endpoints:
+
+```bash
+# Shorten a URL
+curl -X POST http://localhost:8080/shorten \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com"}'
+
+# Batch shorten
+curl -X POST http://localhost:8080/shorten/batch \
+  -H "Content-Type: application/json" \
+  -d '{"items": [{"url": "https://google.com"}]}'
+
+# Redirect (replace <code> with actual short code)
+curl -v http://localhost:8080/<code>
+
+# Get analytics
+curl http://localhost:8080/analytics/<code>
+
+# Prometheus metrics
+curl http://localhost:8080/metrics
 ```
 
 ---
@@ -264,19 +356,40 @@ go run cmd/server/main.go
 # 10. Project Structure
 
 ```
-├── cmd/server/main.go
-├── internal/
+├── cmd/
 │   ├── api/
-│   ├── cache/
-│   ├── rate/
-│   ├── shortener/
+│   │   ├── Dockerfile
+│   │   └── main.go              # API server entry point
 │   ├── analytics/
-│   ├── prometheus/
-│   └── storage/
-├── migrations/
-├── Dockerfile
-├── docker-compose.yml
+│   │   ├── Dockerfile
+│   │   └── main.go              # Analytics service entry point
+│   └── migration/
+│       ├── Dockerfile
+│       └── main.go              # Migration tool entry point
+├── internal/                     # Common packages
+│   ├── cache/                   # Redis cache implementation
+│   ├── config/                  # Configuration management
+│   ├── prometheus/              # Prometheus metrics
+│   ├── rate/                    # Rate limiting
+│   └── storage/                 # Database layer (DAO/Repo)
+├── svc/                         # Business logic services
+│   ├── api/                     # API handlers, middleware, routing
+│   ├── analytics/              # Analytics service
+│   └── shortener/              # URL shortening service
+├── migrations/                  # Database migrations
+│   ├── 001_create_tables.up.sql
+│   └── 001_create_tables.down.sql
+├── docker-compose.yml           # Docker Compose configuration
+├── Makefile                     # Build and development commands
+├── .golangci.yml               # Linter configuration
 └── README.md
 ```
+
+## Architecture Overview
+
+- **cmd/**: Application entry points (separate binaries for API, analytics, migration)
+- **internal/**: Shared infrastructure code (cache, config, storage, etc.)
+- **svc/**: Business domain logic (API handlers, shortener service, analytics service)
+- **migrations/**: Database schema migrations
 
 ---
