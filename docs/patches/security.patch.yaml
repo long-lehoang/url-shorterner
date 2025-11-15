@@ -1,0 +1,9 @@
+- op: add
+  path: /components/securitySchemes
+  value:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: API key authentication (optional for public endpoints)
+

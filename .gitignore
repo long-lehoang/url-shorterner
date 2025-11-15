@@ -5,6 +5,16 @@
 *.so
 *.dylib
 bin/
+docs/swagger-polished.json
+docs/swagger.json
+docs/swagger.yaml
+docs/docs.go
+api/spec/openapi.json
+public/
+node_modules/
+package-lock.json
+# package.json is optional - only needed if running scripts locally
+# package.json
 dist/
 
 # Test binary
@@ -36,3 +46,9 @@ go.work
 # OS
 .DS_Store
 Thumbs.db
+
+# Python virtual environment
+.venv/
+venv/
+env/
+ENV/

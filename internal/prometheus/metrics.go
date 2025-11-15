@@ -1,3 +1,4 @@
+// Package prometheus provides Prometheus metrics definitions for monitoring.
 package prometheus
 
 import (

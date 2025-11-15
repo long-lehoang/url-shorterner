@@ -1,3 +1,4 @@
+// Package storage provides database access objects for read operations.
 package storage
 
 import (
@@ -18,21 +19,12 @@ type URL struct {
 }
 
 type AnalyticsRecord struct {
-	ID         string
-	ShortCode  string
-	IPAddress  string
-	UserAgent  string
-	Referer    string
-	ClickedAt  time.Time
-}
-
-type DAO interface {
-	CreateURL(ctx context.Context, url *URL) error
-	GetURLByShortCode(ctx context.Context, shortCode string) (*URL, error)
-	CheckShortCodeExists(ctx context.Context, shortCode string) (bool, error)
-	CreateAnalytics(ctx context.Context, record *AnalyticsRecord) error
-	GetAnalyticsByShortCode(ctx context.Context, shortCode string, limit int) ([]*AnalyticsRecord, error)
-	GetAnalyticsStats(ctx context.Context, shortCode string) (*AnalyticsStats, error)
+	ID        string
+	ShortCode string
+	IPAddress string
+	UserAgent string
+	Referer   string
+	ClickedAt time.Time
 }
 
 type AnalyticsStats struct {
@@ -41,29 +33,19 @@ type AnalyticsStats struct {
 	LastClick   *time.Time
 }
 
+type DAO interface {
+	GetURLByShortCode(ctx context.Context, shortCode string) (*URL, error)
+	CheckShortCodeExists(ctx context.Context, shortCode string) (bool, error)
+	GetAnalyticsByShortCode(ctx context.Context, shortCode string, limit int) ([]*AnalyticsRecord, error)
+	GetAnalyticsStats(ctx context.Context, shortCode string) (*AnalyticsStats, error)
+}
+
 type dao struct {
 	db *pgxpool.Pool
 }
 
 func NewDAO(db *pgxpool.Pool) DAO {
 	return &dao{db: db}
-}
-
-func (d *dao) CreateURL(ctx context.Context, url *URL) error {
-	query := `
-		INSERT INTO urls (id, short_code, original_url, expires_at, created_at, updated_at)
-		VALUES (@id, @short_code, @original_url, @expires_at, @created_at, @updated_at)
-	`
-	args := pgx.NamedArgs{
-		"id":           url.ID,
-		"short_code":   url.ShortCode,
-		"original_url": url.OriginalURL,
-		"expires_at":   url.ExpiresAt,
-		"created_at":   url.CreatedAt,
-		"updated_at":   url.UpdatedAt,
-	}
-	_, err := d.db.Exec(ctx, query, args)
-	return err
 }
 
 func (d *dao) GetURLByShortCode(ctx context.Context, shortCode string) (*URL, error) {
@@ -105,23 +87,6 @@ func (d *dao) CheckShortCodeExists(ctx context.Context, shortCode string) (bool,
 	var exists bool
 	err := d.db.QueryRow(ctx, query, args).Scan(&exists)
 	return exists, err
-}
-
-func (d *dao) CreateAnalytics(ctx context.Context, record *AnalyticsRecord) error {
-	query := `
-		INSERT INTO analytics (id, short_code, ip_address, user_agent, referer, clicked_at)
-		VALUES (@id, @short_code, @ip_address, @user_agent, @referer, @clicked_at)
-	`
-	args := pgx.NamedArgs{
-		"id":          record.ID,
-		"short_code":  record.ShortCode,
-		"ip_address":  record.IPAddress,
-		"user_agent":  record.UserAgent,
-		"referer":     record.Referer,
-		"clicked_at":  record.ClickedAt,
-	}
-	_, err := d.db.Exec(ctx, query, args)
-	return err
 }
 
 func (d *dao) GetAnalyticsByShortCode(ctx context.Context, shortCode string, limit int) ([]*AnalyticsRecord, error) {
@@ -190,4 +155,3 @@ func (d *dao) GetAnalyticsStats(ctx context.Context, shortCode string) (*Analyti
 	stats.LastClick = lastClick
 	return &stats, nil
 }
-

@@ -28,34 +28,24 @@ linters-settings:
     rules:
       - name: exported
         severity: warning
-        disabled: false
       - name: var-naming
         severity: warning
-        disabled: false
       - name: var-declaration
         severity: warning
-        disabled: false
       - name: package-comments
         severity: warning
-        disabled: false
       - name: range
         severity: warning
-        disabled: false
       - name: if-return
         severity: warning
-        disabled: false
       - name: error-return
         severity: warning
-        disabled: false
       - name: error-naming
         severity: warning
-        disabled: false
       - name: errorf
         severity: warning
-        disabled: false
 
 linters:
-  disable-all: true
   enable:
     - errcheck
     - goconst
@@ -70,7 +60,6 @@ linters:
     - unused
 
 issues:
-  exclude-use-default: false
   max-issues-per-linter: 0
   max-same-issues: 0
 

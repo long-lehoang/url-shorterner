@@ -1,0 +1,21 @@
+# Add security to all operations
+- op: add
+  path: /paths/~1analytics~1{code}/get/security
+  value:
+    - ApiKeyAuth: []
+
+- op: add
+  path: /paths/~1shorten/post/security
+  value:
+    - ApiKeyAuth: []
+
+- op: add
+  path: /paths/~1shorten~1batch/post/security
+  value:
+    - ApiKeyAuth: []
+
+- op: add
+  path: /paths/~1{code}/get/security
+  value:
+    - ApiKeyAuth: []
+

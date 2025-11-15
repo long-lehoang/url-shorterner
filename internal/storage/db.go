@@ -1,3 +1,4 @@
+// Package storage provides database connection pooling and migration utilities.
 package storage
 
 import (

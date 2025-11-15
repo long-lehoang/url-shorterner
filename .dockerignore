@@ -1,0 +1,52 @@
+# Node.js dependencies and configs
+node_modules/
+package.json
+package-lock.json
+
+# Generated documentation
+public/
+docs/swagger-polished.json
+docs/swagger.json
+docs/swagger.yaml
+docs/docs.go
+api/spec/
+
+# Documentation configs
+*.md
+mkdocs.yml
+redocly.yaml
+README*.md
+
+# Git
+.git/
+.gitignore
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+
+# Build artifacts
+bin/
+*.test
+*.out
+
+# Docker files (don't need to copy Dockerfiles into images)
+Dockerfile*
+docker-compose.yml
+.dockerignore
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+

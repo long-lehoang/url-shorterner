@@ -8,10 +8,10 @@ import (
 	"syscall"
 	"time"
 
-	"url-shorterner/internal/cache"
 	"url-shorterner/internal/config"
 	"url-shorterner/internal/storage"
-	"url-shorterner/svc/analytics"
+	analyticsApp "url-shorterner/svc/analytics/app"
+	analyticsStore "url-shorterner/svc/analytics/store"
 )
 
 func main() {
@@ -22,22 +22,26 @@ func main() {
 
 	ctx := context.Background()
 
-	pool, err := storage.NewDBPool(ctx, cfg.DatabaseURL)
+	writerPool, err := storage.NewDBPool(ctx, cfg.DatabaseURL)
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		log.Fatalf("Failed to connect to writer database: %v", err)
 	}
-	defer pool.Close()
+	defer writerPool.Close()
 
-	redisCache, err := cache.NewCache(cfg.RedisAddr, cfg.RedisPassword)
+	readerPool, err := storage.NewDBPool(ctx, cfg.DatabaseReaderURL)
 	if err != nil {
-		log.Fatalf("Failed to connect to Redis: %v", err)
+		log.Fatalf("Failed to connect to reader database: %v", err)
 	}
+	defer readerPool.Close()
 
-	dao := storage.NewDAO(pool)
-	repo := storage.NewRepository(dao)
-	analyticsService := analytics.NewService(repo)
+	storageRepo := storage.NewRepository(writerPool)
+	storageDAO := storage.NewDAO(readerPool)
 
-	log.Println("Analytics service starting...")
+	analyticsRepo := analyticsStore.NewRepository(storageRepo)
+	analyticsDAO := analyticsStore.NewDAO(storageDAO)
+	_ = analyticsApp.NewService(analyticsRepo, analyticsDAO)
+
+	log.Println("Analytics service starting (event-driven mode)...")
 
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
@@ -48,13 +52,10 @@ func main() {
 	for {
 		select {
 		case <-ticker.C:
-			log.Println("Processing analytics...")
-			_ = analyticsService
-			_ = redisCache
+			log.Println("Analytics service running (event-driven mode)")
 		case <-quit:
 			log.Println("Shutting down analytics service...")
 			return
 		}
 	}
 }
-

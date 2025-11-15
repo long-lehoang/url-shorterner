@@ -1,0 +1,35 @@
+- op: replace
+  path: /info/title
+  value: URL Shortener API
+
+- op: replace
+  path: /info/version
+  value: "1.0"
+
+- op: add
+  path: /info/description
+  value: |
+    A high-performance URL shortener service with analytics and rate limiting.
+    
+    ## Features
+    - Create shortened URLs with optional expiration and custom aliases
+    - Batch URL shortening
+    - Click analytics with IP tracking, user agent, and referer information
+    - Rate limiting using sliding window algorithm
+    - Redis caching for sub-millisecond latency
+    - Bloom filter for fast invalid code rejection
+    - Prometheus metrics for monitoring
+
+- op: add
+  path: /info/contact
+  value:
+    name: API Support
+    url: http://www.example.com/support
+    email: support@example.com
+
+- op: add
+  path: /info/license
+  value:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+

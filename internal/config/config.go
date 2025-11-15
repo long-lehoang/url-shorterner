@@ -1,3 +1,4 @@
+// Package config provides configuration loading from environment variables.
 package config
 
 import (
@@ -8,30 +9,39 @@ import (
 )
 
 type Config struct {
-	Port                  int
-	DatabaseURL           string
-	RedisAddr             string
-	RedisPassword         string
-	ShortCodeLength       int
-	RateLimitMax          int
-	RateLimitWindow       time.Duration
-	BloomN                uint
-	BloomP                float64
-	Domain                string
+	Port              int
+	DatabaseURL       string
+	DatabaseReaderURL string
+	RedisAddr         string
+	RedisPassword     string
+	ShortCodeLength   int
+	RateLimitMax      int
+	RateLimitWindow   time.Duration
+	BloomN            uint
+	BloomP            float64
+	Domain            string
 }
 
 func Load() (*Config, error) {
+	databaseURL := getEnv("DATABASE_URL", "postgres://postgres:password@localhost:5432/shortener?sslmode=disable")
+
+	databaseReaderURL := getEnv("DATABASE_READER_URL", "")
+	if databaseReaderURL == "" {
+		databaseReaderURL = databaseURL
+	}
+
 	cfg := &Config{
-		Port:                  getEnvInt("PORT", 8080),
-		DatabaseURL:           getEnv("DATABASE_URL", "postgres://postgres:password@localhost:5432/shortener?sslmode=disable"),
-		RedisAddr:             getEnv("REDIS_ADDR", "localhost:6379"),
-		RedisPassword:         getEnv("REDIS_PASSWORD", ""),
-		ShortCodeLength:       getEnvInt("SHORT_CODE_LENGTH", 8),
-		RateLimitMax:          getEnvInt("RATE_LIMIT_MAX", 100),
-		RateLimitWindow:       time.Duration(getEnvInt("RATE_LIMIT_WINDOW_SECONDS", 60)) * time.Second,
-		BloomN:                uint(getEnvInt("BLOOM_N", 1000000)),
-		BloomP:                getEnvFloat("BLOOM_P", 0.001),
-		Domain:                getEnv("DOMAIN", "http://localhost:8080"),
+		Port:              getEnvInt("PORT", 8080),
+		DatabaseURL:       databaseURL,
+		DatabaseReaderURL: databaseReaderURL,
+		RedisAddr:         getEnv("REDIS_ADDR", "localhost:6379"),
+		RedisPassword:     getEnv("REDIS_PASSWORD", ""),
+		ShortCodeLength:   getEnvInt("SHORT_CODE_LENGTH", 8),
+		RateLimitMax:      getEnvInt("RATE_LIMIT_MAX", 100),
+		RateLimitWindow:   time.Duration(getEnvInt("RATE_LIMIT_WINDOW_SECONDS", 60)) * time.Second,
+		BloomN:            uint(getEnvInt("BLOOM_N", 1000000)),
+		BloomP:            getEnvFloat("BLOOM_P", 0.001),
+		Domain:            getEnv("DOMAIN", "http://localhost:8080"),
 	}
 
 	if cfg.ShortCodeLength < 4 || cfg.ShortCodeLength > 20 {
@@ -65,4 +75,3 @@ func getEnvFloat(key string, defaultValue float64) float64 {
 	}
 	return defaultValue
 }
-

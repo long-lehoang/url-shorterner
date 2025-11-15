@@ -1,86 +1,56 @@
+// Package storage provides repository interfaces for write operations.
 package storage
 
 import (
 	"context"
-	"time"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Repository interface {
-	CreateURL(ctx context.Context, shortCode, originalURL string, expiresAt *time.Time) (*URL, error)
-	GetURLByShortCode(ctx context.Context, shortCode string) (*URL, error)
-	CheckShortCodeExists(ctx context.Context, shortCode string) (bool, error)
-	RecordClick(ctx context.Context, shortCode, ipAddress, userAgent, referer string) error
-	GetAnalytics(ctx context.Context, shortCode string, limit int) ([]*AnalyticsRecord, error)
-	GetAnalyticsStats(ctx context.Context, shortCode string) (*AnalyticsStats, error)
+	CreateURL(ctx context.Context, url *URL) error
+	CreateAnalytics(ctx context.Context, record *AnalyticsRecord) error
 }
 
 type repository struct {
-	dao DAO
+	db *pgxpool.Pool
 }
 
-func NewRepository(dao DAO) Repository {
-	return &repository{dao: dao}
+func NewRepository(db *pgxpool.Pool) Repository {
+	return &repository{db: db}
 }
 
-func (r *repository) CreateURL(ctx context.Context, shortCode, originalURL string, expiresAt *time.Time) (*URL, error) {
-	now := time.Now().UTC()
-	url := &URL{
-		ID:          uuid.New().String(),
-		ShortCode:   shortCode,
-		OriginalURL: originalURL,
-		ExpiresAt:   expiresAt,
-		CreatedAt:   now,
-		UpdatedAt:   now,
+func (r *repository) CreateURL(ctx context.Context, url *URL) error {
+	query := `
+		INSERT INTO urls (id, short_code, original_url, expires_at, created_at, updated_at)
+		VALUES (@id, @short_code, @original_url, @expires_at, @created_at, @updated_at)
+	`
+	args := pgx.NamedArgs{
+		"id":           url.ID,
+		"short_code":   url.ShortCode,
+		"original_url": url.OriginalURL,
+		"expires_at":   url.ExpiresAt,
+		"created_at":   url.CreatedAt,
+		"updated_at":   url.UpdatedAt,
 	}
+	_, err := r.db.Exec(ctx, query, args)
+	return err
+}
 
-	if err := r.dao.CreateURL(ctx, url); err != nil {
-		return nil, err
+func (r *repository) CreateAnalytics(ctx context.Context, record *AnalyticsRecord) error {
+	query := `
+		INSERT INTO analytics (id, short_code, ip_address, user_agent, referer, clicked_at)
+		VALUES (@id, @short_code, @ip_address, @user_agent, @referer, @clicked_at)
+	`
+	args := pgx.NamedArgs{
+		"id":         record.ID,
+		"short_code": record.ShortCode,
+		"ip_address": record.IPAddress,
+		"user_agent": record.UserAgent,
+		"referer":    record.Referer,
+		"clicked_at": record.ClickedAt,
 	}
-
-	return url, nil
+	_, err := r.db.Exec(ctx, query, args)
+	return err
 }
-
-func (r *repository) GetURLByShortCode(ctx context.Context, shortCode string) (*URL, error) {
-	url, err := r.dao.GetURLByShortCode(ctx, shortCode)
-	if err != nil {
-		if err == pgx.ErrNoRows {
-			return nil, ErrNotFound
-		}
-		return nil, err
-	}
-
-	if url.ExpiresAt != nil && url.ExpiresAt.Before(time.Now().UTC()) {
-		return nil, ErrExpired
-	}
-
-	return url, nil
-}
-
-func (r *repository) CheckShortCodeExists(ctx context.Context, shortCode string) (bool, error) {
-	return r.dao.CheckShortCodeExists(ctx, shortCode)
-}
-
-func (r *repository) RecordClick(ctx context.Context, shortCode, ipAddress, userAgent, referer string) error {
-	record := &AnalyticsRecord{
-		ID:        uuid.New().String(),
-		ShortCode: shortCode,
-		IPAddress: ipAddress,
-		UserAgent: userAgent,
-		Referer:   referer,
-		ClickedAt: time.Now().UTC(),
-	}
-
-	return r.dao.CreateAnalytics(ctx, record)
-}
-
-func (r *repository) GetAnalytics(ctx context.Context, shortCode string, limit int) ([]*AnalyticsRecord, error) {
-	return r.dao.GetAnalyticsByShortCode(ctx, shortCode, limit)
-}
-
-func (r *repository) GetAnalyticsStats(ctx context.Context, shortCode string) (*AnalyticsStats, error) {
-	return r.dao.GetAnalyticsStats(ctx, shortCode)
-}
-

@@ -10,15 +10,66 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"url-shorterner/internal/cache"
 	"url-shorterner/internal/config"
+	"url-shorterner/internal/events"
 	"url-shorterner/internal/rate"
 	"url-shorterner/internal/storage"
-	"url-shorterner/svc/analytics"
-	"url-shorterner/svc/api"
-	"url-shorterner/svc/shortener"
+	analyticsApp "url-shorterner/svc/analytics/app"
+	analyticsStore "url-shorterner/svc/analytics/store"
+	analyticsTransport "url-shorterner/svc/api/analytics/transport"
+	shortenerTransport "url-shorterner/svc/api/shortener/transport"
+	shortenerApp "url-shorterner/svc/shortener/app"
+	shortenerStore "url-shorterner/svc/shortener/store"
+
+	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+
+	_ "url-shorterner/docs"
 )
+
+// Package main provides the URL Shortener API server.
+//
+// A high-performance URL shortener service with analytics and rate limiting capabilities.
+//
+// This API provides endpoints for creating shortened URLs, retrieving analytics,
+// and managing URL redirections with advanced features like expiration, custom aliases,
+// and comprehensive click tracking.
+//
+//     Schemes: http, https
+//     Host: localhost:8080
+//     BasePath: /
+//     Version: 1.0
+//     Title: URL Shortener API
+//     Description: A high-performance URL shortener service with analytics and rate limiting.
+//
+//     Consumes:
+//     - application/json
+//
+//     Produces:
+//     - application/json
+//
+//     SecurityDefinitions:
+//       ApiKeyAuth:
+//         type: apiKey
+//         in: header
+//         name: Authorization
+//         description: API key authentication (optional for public endpoints)
+//
+//     Contact:
+//       name: API Support
+//       url: http://www.example.com/support
+//       email: support@example.com
+//
+//     License:
+//       name: Apache 2.0
+//       url: http://www.apache.org/licenses/LICENSE-2.0.html
+//
+//     TermsOfService: http://swagger.io/terms/
+//
+// swagger:meta
 
 func main() {
 	cfg, err := config.Load()
@@ -28,11 +79,17 @@ func main() {
 
 	ctx := context.Background()
 
-	pool, err := storage.NewDBPool(ctx, cfg.DatabaseURL)
+	writerPool, err := storage.NewDBPool(ctx, cfg.DatabaseURL)
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		log.Fatalf("Failed to connect to writer database: %v", err)
 	}
-	defer pool.Close()
+	defer writerPool.Close()
+
+	readerPool, err := storage.NewDBPool(ctx, cfg.DatabaseReaderURL)
+	if err != nil {
+		log.Fatalf("Failed to connect to reader database: %v", err)
+	}
+	defer readerPool.Close()
 
 	redisCache, err := cache.NewCache(cfg.RedisAddr, cfg.RedisPassword)
 	if err != nil {
@@ -42,11 +99,14 @@ func main() {
 	urlCache := cache.NewURLCache(redisCache)
 	rateLimitCache := cache.NewRateLimitCache(redisCache)
 
-	dao := storage.NewDAO(pool)
-	repo := storage.NewRepository(dao)
+	storageRepo := storage.NewRepository(writerPool)
+	storageDAO := storage.NewDAO(readerPool)
 
-	shortenerService := shortener.NewService(
-		repo,
+	shortenerRepo := shortenerStore.NewRepository(storageRepo)
+	shortenerDAO := shortenerStore.NewDAO(storageDAO)
+	shortenerService := shortenerApp.NewService(
+		shortenerRepo,
+		shortenerDAO,
 		urlCache,
 		cfg.BloomN,
 		cfg.BloomP,
@@ -54,14 +114,25 @@ func main() {
 		cfg.Domain,
 	)
 
-	analyticsService := analytics.NewService(repo)
+	analyticsRepo := analyticsStore.NewRepository(storageRepo)
+	analyticsDAO := analyticsStore.NewDAO(storageDAO)
+	analyticsService := analyticsApp.NewService(analyticsRepo, analyticsDAO)
 
 	limiter := rate.NewLimiter(rateLimitCache, cfg.RateLimitMax, cfg.RateLimitWindow)
 
-	router := api.SetupRouter(shortenerService, analyticsService, limiter)
+	var eventPublisher events.Publisher
+	router := gin.Default()
+
+	shortenerTransport.SetupRouter(router, shortenerService, eventPublisher, limiter)
+	analyticsTransport.SetupRouter(router, analyticsService, limiter)
+
+	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.URL("http://localhost:8080/swagger/doc.json")))
 
 	if os.Getenv("GIN_MODE") == "" {
 		gin.SetMode(gin.ReleaseMode)
+	} else {
+		gin.SetMode(os.Getenv("GIN_MODE"))
 	}
 
 	server := &http.Server{
@@ -94,4 +165,3 @@ func main() {
 
 	log.Println("API server exited")
 }
-

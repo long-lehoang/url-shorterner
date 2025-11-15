@@ -1,0 +1,17 @@
+# Add operationId to all operations
+- op: add
+  path: /paths/~1analytics~1{code}/get/operationId
+  value: getAnalytics
+
+- op: add
+  path: /paths/~1shorten/post/operationId
+  value: shortenURL
+
+- op: add
+  path: /paths/~1shorten~1batch/post/operationId
+  value: shortenBatchURLs
+
+- op: add
+  path: /paths/~1{code}/get/operationId
+  value: redirectToURL
+

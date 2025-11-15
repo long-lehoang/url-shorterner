@@ -1,3 +1,4 @@
+// Package rate provides rate limiting functionality using a sliding window algorithm.
 package rate
 
 import (

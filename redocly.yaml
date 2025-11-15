@@ -1,0 +1,9 @@
+extends:
+  - recommended
+
+apis:
+  api@v1:
+    root: ./api/spec/openapi.json
+
+# Note: theme and lint sections are not supported in this version of Redocly
+# Configuration moved to OpenAPI spec extensions or removed

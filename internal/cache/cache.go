@@ -1,3 +1,4 @@
+// Package cache provides Redis-based caching functionality for URLs and rate limiting.
 package cache
 
 import (
@@ -135,5 +136,8 @@ func (rlc *RateLimitCache) AddToWindow(ctx context.Context, key string, timestam
 	return rlc.SetWindow(ctx, key, filtered, windowSize+time.Second*10)
 }
 
-var ErrNotFound = fmt.Errorf("not found")
+var (
+	// ErrNotFound is returned when a cache key is not found.
+	ErrNotFound = fmt.Errorf("not found")
+)
 

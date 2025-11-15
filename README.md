@@ -220,6 +220,41 @@ Route: `/metrics`
 | GET    | `/:code`           | Redirect             |
 | GET    | `/analytics/:code` | Get analytics        |
 | GET    | `/metrics`         | Prometheus metrics   |
+| GET    | `/swagger/index.html` | Swagger API documentation |
+
+## 6.1 API Documentation
+
+The API includes interactive Swagger/OpenAPI documentation that can be accessed in two ways:
+
+### Option 1: Embedded Swagger UI (Default)
+**Swagger UI:** `http://localhost:8080/swagger/index.html`
+
+The Swagger UI is embedded in the API server and automatically served at `/swagger/*` when the API server is running.
+
+### Option 2: Redoc Documentation (Docker)
+**Redoc UI:** `http://localhost:8081`
+
+When using Docker Compose, a Redoc documentation service is available using `redocly/redoc`:
+- Runs on port `8081`
+- Serves beautiful, interactive API documentation from the generated `docs/swagger.yaml` file
+- Automatically starts with `docker compose up`
+- Provides a modern, responsive documentation interface optimized for readability
+- Features include: code samples, request/response examples, and interactive API exploration
+
+### Generating Documentation
+
+To generate or update the API documentation:
+
+```bash
+make swagger-gen
+# or
+make swagger
+```
+
+This will:
+- Parse Swagger annotations from the code
+- Generate OpenAPI/Swagger JSON and YAML files in the `docs/` directory
+- Create the documentation package for serving the Swagger UI
 
 ---
 
@@ -228,6 +263,7 @@ Route: `/metrics`
 ```
 PORT=8080
 DATABASE_URL=postgres://postgres:password@postgres:5432/shortener?sslmode=disable
+DATABASE_READER_URL=postgres://postgres:password@postgres-read:5432/shortener?sslmode=disable
 REDIS_ADDR=redis:6379
 REDIS_PASSWORD=
 SHORT_CODE_LENGTH=8
@@ -237,6 +273,12 @@ BLOOM_N=1000000
 BLOOM_P=0.001
 DOMAIN=https://short.ly
 ```
+
+**Database Configuration:**
+- `DATABASE_URL` - Primary database (writer) - **Required**
+- `DATABASE_READER_URL` - Read replica (reader) - **Optional**
+  - If not set, defaults to `DATABASE_URL` (same database for local development)
+  - In production, set to a separate read replica endpoint for better scalability
 
 ---
 

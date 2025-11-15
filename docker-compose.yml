@@ -82,5 +82,15 @@ services:
       redis:
         condition: service_healthy
 
+  redoc:
+    image: nginx:alpine
+    container_name: url-shortener-redoc
+    ports:
+      - "8081:80"
+    volumes:
+      - ./docs:/usr/share/nginx/html:ro
+    depends_on:
+      - api
+
 volumes:
   postgres_data:

@@ -1,0 +1,134 @@
+swagger: "2.0"
+info:
+  title: URL Shortener API
+  version: "1.0"
+  description: |
+    A high-performance URL shortener service with analytics and rate limiting.
+    
+    ## Features
+    - Create shortened URLs with optional expiration and custom aliases
+    - Batch URL shortening
+    - Click analytics with IP tracking, user agent, and referer information
+    - Rate limiting using sliding window algorithm
+    - Redis caching for sub-millisecond latency
+    - Bloom filter for fast invalid code rejection
+    - Prometheus metrics for monitoring
+
+definitions:
+  Error:
+    type: object
+    required:
+      - error
+    properties:
+      error:
+        type: string
+        description: Error message
+        example: "error message"
+  
+  ShortenRequest:
+    type: object
+    required:
+      - url
+    properties:
+      url:
+        type: string
+        format: uri
+        description: The URL to shorten
+        example: "https://example.com"
+      expires_in:
+        type: integer
+        description: Expiration time in seconds (optional)
+        example: 3600
+      alias:
+        type: string
+        description: Custom alias for the short code (optional)
+        example: "my-custom-alias"
+  
+  BatchShortenRequest:
+    type: object
+    required:
+      - items
+    properties:
+      items:
+        type: array
+        items:
+          $ref: "#/definitions/BatchItem"
+  
+  BatchItem:
+    type: object
+    properties:
+      url:
+        type: string
+        format: uri
+      expires_in:
+        type: integer
+      alias:
+        type: string
+  
+  ShortenResponse:
+    type: object
+    properties:
+      short_code:
+        type: string
+        description: The generated short code
+        example: "abc123"
+      short_url:
+        type: string
+        description: The complete shortened URL
+        example: "http://localhost:8080/abc123"
+      expires_at:
+        type: string
+        format: date-time
+        nullable: true
+        description: Expiration timestamp (if set)
+  
+  BatchResult:
+    type: object
+    properties:
+      url:
+        type: string
+      short:
+        type: string
+      error:
+        type: string
+  
+  AnalyticsResponse:
+    type: object
+    properties:
+      short_code:
+        type: string
+        example: "abc123"
+      total_clicks:
+        type: integer
+        example: 42
+      unique_ips:
+        type: integer
+        example: 10
+      last_click:
+        type: string
+        format: date-time
+        nullable: true
+      records:
+        type: array
+        items:
+          $ref: "#/definitions/AnalyticsRecord"
+  
+  AnalyticsRecord:
+    type: object
+    properties:
+      id:
+        type: string
+      short_code:
+        type: string
+      ip_address:
+        type: string
+      user_agent:
+        type: string
+      referer:
+        type: string
+      clicked_at:
+        type: string
+        format: date-time
+
+paths: {}
+

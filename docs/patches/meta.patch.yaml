@@ -1,0 +1,33 @@
+- op: replace
+  path: /servers
+  value:
+    - url: http://{host}:{port}
+      description: API server
+      variables:
+        host:
+          default: localhost
+          description: API hostname
+        port:
+          default: "8080"
+          description: API port
+    - url: https://{host}
+      description: Production API server
+      variables:
+        host:
+          default: api.yourdomain.com
+          description: Production API hostname
+
+- op: add
+  path: /tags
+  value:
+    - name: shortener
+      description: URL shortening operations
+    - name: analytics
+      description: Analytics and statistics operations
+
+- op: add
+  path: /x-logo
+  value:
+    url: https://example.com/logo.png
+    altText: URL Shortener API Logo
+

@@ -1,0 +1,17 @@
+{
+  "name": "url-shortener-docs",
+  "version": "1.0.0",
+  "description": "Documentation build tools for URL Shortener API (optional - uses Docker by default)",
+  "private": true,
+  "scripts": {
+    "polish-swagger": "node docs/scripts/polish-swagger.js",
+    "polish-openapi": "node docs/scripts/polish-openapi.js",
+    "apply-patches": "node docs/scripts/apply-patches.js",
+    "build-docs": "bash docs/scripts/build-docs.sh"
+  },
+  "devDependencies": {
+    "@redocly/cli": "^1.10.0",
+    "fast-json-patch": "^3.1.1",
+    "js-yaml": "^4.1.1"
+  }
+}
