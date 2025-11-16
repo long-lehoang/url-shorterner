@@ -2,28 +2,27 @@
 package transport
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
-	"url-shorterner/internal/prometheus"
 	"url-shorterner/svc/analytics/app"
 
 	"github.com/gin-gonic/gin"
 )
 
-type handlers struct {
+type api struct {
 	service app.Service
 }
 
-func NewHandlers(service app.Service) AnalyticsAPI {
-	return &handlers{service: service}
+func NewAnalyticsAPI(service app.Service) AnalyticsAPI {
+	return &api{service: service}
 }
 
-func (h *handlers) GetAnalytics(c *gin.Context) {
+func (a *api) GetAnalytics(c *gin.Context) {
 	shortCode := c.Param("code")
 	if shortCode == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "short code is required"})
-		prometheus.HTTPRequestsTotal.WithLabelValues("GET", "/analytics/:code", "400").Inc()
+		c.Error(errors.New("short code is required"))
 		return
 	}
 
@@ -34,17 +33,15 @@ func (h *handlers) GetAnalytics(c *gin.Context) {
 		}
 	}
 
-	stats, err := h.service.GetStats(c.Request.Context(), shortCode)
+	stats, err := a.service.GetStats(c.Request.Context(), shortCode)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		prometheus.HTTPRequestsTotal.WithLabelValues("GET", "/analytics/:code", "500").Inc()
+		c.Error(err)
 		return
 	}
 
-	records, err := h.service.GetAnalytics(c.Request.Context(), shortCode, limit)
+	records, err := a.service.GetAnalytics(c.Request.Context(), shortCode, limit)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		prometheus.HTTPRequestsTotal.WithLabelValues("GET", "/analytics/:code", "500").Inc()
+		c.Error(err)
 		return
 	}
 
@@ -55,7 +52,6 @@ func (h *handlers) GetAnalytics(c *gin.Context) {
 		"last_click":   stats.LastClick,
 		"records":      records,
 	})
-	prometheus.HTTPRequestsTotal.WithLabelValues("GET", "/analytics/:code", "200").Inc()
 }
 
 func parseInt(s string) int {

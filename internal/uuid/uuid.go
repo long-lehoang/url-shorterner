@@ -2,14 +2,10 @@
 package uuid
 
 import (
-	"crypto/rand"
-	"encoding/base64"
+	"github.com/google/uuid"
 )
 
-// Generate generates a unique identifier using cryptographically secure random bytes.
+// Generate generates a UUID v4 using cryptographically secure random bytes.
 func Generate() string {
-	bytes := make([]byte, 16)
-	_, _ = rand.Read(bytes)
-	return base64.URLEncoding.EncodeToString(bytes)
+	return uuid.New().String()
 }
-

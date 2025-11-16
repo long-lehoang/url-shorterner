@@ -13,6 +13,7 @@ import (
 	"url-shorterner/internal/cache"
 	"url-shorterner/internal/config"
 	"url-shorterner/internal/events"
+	"url-shorterner/internal/middleware"
 	"url-shorterner/internal/rate"
 	"url-shorterner/internal/storage"
 	analyticsApp "url-shorterner/svc/analytics/app"
@@ -24,52 +25,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
-
-	_ "url-shorterner/docs"
 )
-
-// Package main provides the URL Shortener API server.
-//
-// A high-performance URL shortener service with analytics and rate limiting capabilities.
-//
-// This API provides endpoints for creating shortened URLs, retrieving analytics,
-// and managing URL redirections with advanced features like expiration, custom aliases,
-// and comprehensive click tracking.
-//
-//     Schemes: http, https
-//     Host: localhost:8080
-//     BasePath: /
-//     Version: 1.0
-//     Title: URL Shortener API
-//     Description: A high-performance URL shortener service with analytics and rate limiting.
-//
-//     Consumes:
-//     - application/json
-//
-//     Produces:
-//     - application/json
-//
-//     SecurityDefinitions:
-//       ApiKeyAuth:
-//         type: apiKey
-//         in: header
-//         name: Authorization
-//         description: API key authentication (optional for public endpoints)
-//
-//     Contact:
-//       name: API Support
-//       url: http://www.example.com/support
-//       email: support@example.com
-//
-//     License:
-//       name: Apache 2.0
-//       url: http://www.apache.org/licenses/LICENSE-2.0.html
-//
-//     TermsOfService: http://swagger.io/terms/
-//
-// swagger:meta
 
 func main() {
 	cfg, err := config.Load()
@@ -104,6 +60,9 @@ func main() {
 
 	shortenerRepo := shortenerStore.NewRepository(storageRepo)
 	shortenerDAO := shortenerStore.NewDAO(storageDAO)
+	var eventPublisher events.Publisher
+	// TODO: Initialize event publisher implementation when available
+
 	shortenerService := shortenerApp.NewService(
 		shortenerRepo,
 		shortenerDAO,
@@ -112,6 +71,7 @@ func main() {
 		cfg.BloomP,
 		cfg.ShortCodeLength,
 		cfg.Domain,
+		eventPublisher,
 	)
 
 	analyticsRepo := analyticsStore.NewRepository(storageRepo)
@@ -120,14 +80,13 @@ func main() {
 
 	limiter := rate.NewLimiter(rateLimitCache, cfg.RateLimitMax, cfg.RateLimitWindow)
 
-	var eventPublisher events.Publisher
-	router := gin.Default()
+	router := gin.New()
+	router.Use(middleware.Recovery())
 
-	shortenerTransport.SetupRouter(router, shortenerService, eventPublisher, limiter)
+	shortenerTransport.SetupRouter(router, shortenerService, limiter)
 	analyticsTransport.SetupRouter(router, analyticsService, limiter)
 
 	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.URL("http://localhost:8080/swagger/doc.json")))
 
 	if os.Getenv("GIN_MODE") == "" {
 		gin.SetMode(gin.ReleaseMode)

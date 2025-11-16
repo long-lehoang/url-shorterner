@@ -10,8 +10,10 @@ import (
 	"time"
 
 	"url-shorterner/internal/cache"
+	eventsPublisher "url-shorterner/internal/events"
 	"url-shorterner/internal/storage"
 	"url-shorterner/internal/uuid"
+	analyticsEvents "url-shorterner/svc/analytics/events"
 	"url-shorterner/svc/shortener/entity"
 	shortenerStore "url-shorterner/svc/shortener/store"
 
@@ -21,7 +23,13 @@ import (
 type Service interface {
 	Shorten(ctx context.Context, originalURL string, expiresIn *int, alias *string) (*ShortenResponse, error)
 	ShortenBatch(ctx context.Context, items []BatchItem) ([]BatchResult, error)
-	GetOriginalURL(ctx context.Context, shortCode string) (string, error)
+	GetOriginalURL(ctx context.Context, shortCode string, clickInfo *ClickInfo) (string, error)
+}
+
+type ClickInfo struct {
+	IPAddress string
+	UserAgent string
+	Referer   string
 }
 
 type service struct {
@@ -31,6 +39,7 @@ type service struct {
 	bloomFilter  *bloom.BloomFilter
 	shortCodeLen int
 	domain       string
+	publisher    eventsPublisher.Publisher
 }
 
 func NewService(
@@ -41,6 +50,7 @@ func NewService(
 	bloomP float64,
 	shortCodeLen int,
 	domain string,
+	publisher eventsPublisher.Publisher,
 ) Service {
 	bf := bloom.NewWithEstimates(bloomN, bloomP)
 	return &service{
@@ -50,6 +60,7 @@ func NewService(
 		bloomFilter:  bf,
 		shortCodeLen: shortCodeLen,
 		domain:       domain,
+		publisher:    publisher,
 	}
 }
 
@@ -180,13 +191,14 @@ func (s *service) ShortenBatch(ctx context.Context, items []BatchItem) ([]BatchR
 	return results, nil
 }
 
-func (s *service) GetOriginalURL(ctx context.Context, shortCode string) (string, error) {
+func (s *service) GetOriginalURL(ctx context.Context, shortCode string, clickInfo *ClickInfo) (string, error) {
 	if !s.bloomFilter.Test([]byte(shortCode)) {
 		return "", ErrURLNotFound
 	}
 
 	cachedURL, err := s.urlCache.GetURL(ctx, shortCode)
 	if err == nil {
+		s.publishClickEvent(ctx, shortCode, clickInfo)
 		return cachedURL, nil
 	}
 
@@ -212,7 +224,29 @@ func (s *service) GetOriginalURL(ctx context.Context, shortCode string) (string,
 		_ = s.urlCache.SetURL(ctx, shortCode, urlEntity.OriginalURL, 365*24*time.Hour)
 	}
 
+	s.publishClickEvent(ctx, shortCode, clickInfo)
 	return urlEntity.OriginalURL, nil
+}
+
+func (s *service) publishClickEvent(ctx context.Context, shortCode string, clickInfo *ClickInfo) {
+	if s.publisher == nil || clickInfo == nil {
+		return
+	}
+
+	go func() {
+		clickEvent := analyticsEvents.ClickEvent{
+			ShortCode: shortCode,
+			IPAddress: clickInfo.IPAddress,
+			UserAgent: clickInfo.UserAgent,
+			Referer:   clickInfo.Referer,
+			Timestamp: time.Now().UTC(),
+		}
+		if err := s.publisher.PublishClickEvent(ctx, clickEvent); err != nil {
+			// Log error but don't fail the redirect
+			// In production, consider using a proper logger
+			_ = err
+		}
+	}()
 }
 
 func (s *service) generateUniqueShortCode(ctx context.Context) (string, error) {

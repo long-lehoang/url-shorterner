@@ -2,8 +2,7 @@
 package transport
 
 import (
-	"url-shorterner/internal/events"
-	"url-shorterner/internal/middleware"
+	"url-shorterner/internal/http"
 	"url-shorterner/internal/rate"
 	"url-shorterner/svc/shortener/app"
 
@@ -205,12 +204,10 @@ type ShortenerAPI interface {
 	Redirect(*gin.Context)
 }
 
-func SetupRouter(router *gin.Engine, service app.Service, publisher events.Publisher, limiter rate.Limiter) {
-	apiGroup := router.Group("/")
-	apiGroup.Use(middleware.RateLimit(limiter))
-	apiGroup.Use(middleware.Prometheus())
+func SetupRouter(router *gin.Engine, service app.Service, limiter rate.Limiter) {
+	apiGroup := http.Router(router, "/", limiter)
 
-	api := NewHandlers(service, publisher)
+	api := NewShortenerAPI(service)
 	apiGroup.POST("/shorten", api.Shorten)
 	apiGroup.POST("/shorten/batch", api.ShortenBatch)
 	apiGroup.GET("/:code", api.Redirect)

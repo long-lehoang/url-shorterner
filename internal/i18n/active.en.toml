@@ -1,0 +1,23 @@
+# English translations
+
+[ERR_VALIDATION]
+other = "Validation failed"
+
+[ERR_BAD_REQUEST]
+other = "Bad request"
+
+[ERR_NOT_FOUND]
+other = "{{.Resource}} not found"
+
+[ERR_CONFLICT]
+other = "Conflict: {{.Message}}"
+
+[ERR_UNAUTHORIZED]
+other = "Unauthorized"
+
+[ERR_FORBIDDEN]
+other = "Forbidden"
+
+[ERR_INTERNAL]
+other = "Internal server error"
+

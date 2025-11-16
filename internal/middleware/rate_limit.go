@@ -1,10 +1,8 @@
-// Package middleware provides HTTP middleware functions for rate limiting and metrics.
+// Package middleware provides HTTP middleware functions for rate limiting, metrics, logging, and error handling.
 package middleware
 
 import (
-	"fmt"
 	"net/http"
-	"time"
 
 	"url-shorterner/internal/prometheus"
 	"url-shorterner/internal/rate"
@@ -12,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// RateLimit returns a Gin middleware that enforces rate limiting.
 func RateLimit(limiter rate.Limiter) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		identifier := c.ClientIP()
@@ -30,19 +29,5 @@ func RateLimit(limiter rate.Limiter) gin.HandlerFunc {
 		}
 
 		c.Next()
-	}
-}
-
-func Prometheus() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		start := time.Now()
-		c.Next()
-		duration := time.Since(start).Seconds()
-		prometheus.HTTPRequestsTotal.WithLabelValues(
-			c.Request.Method,
-			c.FullPath(),
-			fmt.Sprintf("%d", c.Writer.Status()),
-		).Inc()
-		_ = duration // Can be used for latency metrics if needed
 	}
 }

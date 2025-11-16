@@ -4,7 +4,7 @@ package transport
 import (
 	"time"
 
-	"url-shorterner/internal/middleware"
+	"url-shorterner/internal/http"
 	"url-shorterner/internal/rate"
 	"url-shorterner/svc/analytics/app"
 	"url-shorterner/svc/analytics/entity"
@@ -109,17 +109,9 @@ type AnalyticsAPI interface {
 	GetAnalytics(*gin.Context)
 }
 
-// getAnalyticsHandler wraps AnalyticsAPI.GetAnalytics for routing
-// The actual API documentation is defined on the AnalyticsAPI.GetAnalytics interface method above
-func getAnalyticsHandler(api AnalyticsAPI) gin.HandlerFunc {
-	return api.GetAnalytics
-}
-
 func SetupRouter(router *gin.Engine, service app.Service, limiter rate.Limiter) {
-	apiGroup := router.Group("/")
-	apiGroup.Use(middleware.RateLimit(limiter))
-	apiGroup.Use(middleware.Prometheus())
+	apiGroup := http.Router(router, "/", limiter)
 
-	api := NewHandlers(service)
-	apiGroup.GET("/analytics/:code", getAnalyticsHandler(api))
+	api := NewAnalyticsAPI(service)
+	apiGroup.GET("/analytics/:code", api.GetAnalytics)
 }

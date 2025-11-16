@@ -1,0 +1,23 @@
+# Vietnamese translations
+
+[ERR_VALIDATION]
+other = "Xác thực thất bại"
+
+[ERR_BAD_REQUEST]
+other = "Yêu cầu không hợp lệ"
+
+[ERR_NOT_FOUND]
+other = "{{.Resource}} không tồn tại"
+
+[ERR_CONFLICT]
+other = "Xung đột: {{.Message}}"
+
+[ERR_UNAUTHORIZED]
+other = "Không được phép"
+
+[ERR_FORBIDDEN]
+other = "Bị cấm"
+
+[ERR_INTERNAL]
+other = "Lỗi máy chủ"
+
