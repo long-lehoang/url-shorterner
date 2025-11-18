@@ -1,4 +1,4 @@
-.PHONY: build build-api build-analytics build-migration run run-api run-analytics run-migration migrate test lint docker-up docker-down clean swagger swagger-gen docs-build docs-serve docs-serve-mkdocs docs-build-mkdocs docs
+.PHONY: build build-api build-analytics build-migration run run-api run-analytics run-migration migrate test test-integration lint docker-up docker-down clean swagger swagger-gen docs-build docs-serve docs-serve-mkdocs docs-build-mkdocs docs
 
 build: build-api build-analytics build-migration
 
@@ -24,6 +24,9 @@ migrate: run-migration
 
 test:
 	go test ./...
+
+test-integration:
+	go test ./test/integration/... -v
 
 lint:
 	@if command -v golangci-lint > /dev/null; then \
