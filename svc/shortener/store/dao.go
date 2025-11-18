@@ -1,10 +1,16 @@
-// Package store provides DAO adapters for the shortener domain.
+// Package store provides DAO implementations for the shortener domain.
 package store
 
 import (
 	"context"
+	"errors"
+	"time"
+
 	"url-shorterner/internal/storage"
 	"url-shorterner/svc/shortener/entity"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type DAO interface {
@@ -13,28 +19,53 @@ type DAO interface {
 }
 
 type dao struct {
-	storageDAO storage.DAO
+	db *pgxpool.Pool
 }
 
-func NewDAO(storageDAO storage.DAO) DAO {
-	return &dao{storageDAO: storageDAO}
+func NewDAO(db *pgxpool.Pool) DAO {
+	return &dao{db: db}
 }
 
 func (d *dao) GetURLByShortCode(ctx context.Context, shortCode string) (*entity.URL, error) {
-	storageURL, err := d.storageDAO.GetURLByShortCode(ctx, shortCode)
+	query := `
+		SELECT id, short_code, original_url, expires_at, created_at, updated_at
+		FROM urls
+		WHERE short_code = @short_code
+	`
+	args := pgx.NamedArgs{
+		"short_code": shortCode,
+	}
+
+	var url entity.URL
+	var expiresAt *time.Time
+	err := d.db.QueryRow(ctx, query, args).Scan(
+		&url.ID,
+		&url.ShortCode,
+		&url.OriginalURL,
+		&expiresAt,
+		&url.CreatedAt,
+		&url.UpdatedAt,
+	)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, storage.ErrNotFound
+		}
 		return nil, err
 	}
-	return &entity.URL{
-		ID:          storageURL.ID,
-		ShortCode:   storageURL.ShortCode,
-		OriginalURL: storageURL.OriginalURL,
-		ExpiresAt:   storageURL.ExpiresAt,
-		CreatedAt:   storageURL.CreatedAt,
-		UpdatedAt:   storageURL.UpdatedAt,
-	}, nil
+
+	url.ExpiresAt = expiresAt
+	return &url, nil
 }
 
 func (d *dao) CheckShortCodeExists(ctx context.Context, shortCode string) (bool, error) {
-	return d.storageDAO.CheckShortCodeExists(ctx, shortCode)
+	query := `
+		SELECT EXISTS(SELECT 1 FROM urls WHERE short_code = @short_code)
+	`
+	args := pgx.NamedArgs{
+		"short_code": shortCode,
+	}
+
+	var exists bool
+	err := d.db.QueryRow(ctx, query, args).Scan(&exists)
+	return exists, err
 }

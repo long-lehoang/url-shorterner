@@ -74,11 +74,8 @@ func SetupTestRouter(cfg *config.Config) *gin.Engine {
 	urlCache := cache.NewURLCache(redisCache)
 	rateLimitCache := cache.NewRateLimitCache(redisCache)
 
-	storageRepo := storage.NewRepository(writerPool)
-	storageDAO := storage.NewDAO(readerPool)
-
-	shortenerRepo := shortenerStore.NewRepository(storageRepo)
-	shortenerDAO := shortenerStore.NewDAO(storageDAO)
+	shortenerRepo := shortenerStore.NewRepository(writerPool)
+	shortenerDAO := shortenerStore.NewDAO(readerPool)
 	var eventPublisher events.Publisher
 
 	shortenerService := shortenerApp.NewService(
@@ -92,8 +89,8 @@ func SetupTestRouter(cfg *config.Config) *gin.Engine {
 		eventPublisher,
 	)
 
-	analyticsRepo := analyticsStore.NewRepository(storageRepo)
-	analyticsDAO := analyticsStore.NewDAO(storageDAO)
+	analyticsRepo := analyticsStore.NewRepository(writerPool)
+	analyticsDAO := analyticsStore.NewDAO(readerPool)
 	analyticsService := analyticsApp.NewService(analyticsRepo, analyticsDAO)
 
 	limiter := rate.NewLimiter(rateLimitCache, cfg.RateLimitMax, cfg.RateLimitWindow)

@@ -34,11 +34,8 @@ func main() {
 	}
 	defer readerPool.Close()
 
-	storageRepo := storage.NewRepository(writerPool)
-	storageDAO := storage.NewDAO(readerPool)
-
-	analyticsRepo := analyticsStore.NewRepository(storageRepo)
-	analyticsDAO := analyticsStore.NewDAO(storageDAO)
+	analyticsRepo := analyticsStore.NewRepository(writerPool)
+	analyticsDAO := analyticsStore.NewDAO(readerPool)
 	_ = analyticsApp.NewService(analyticsRepo, analyticsDAO)
 
 	log.Println("Analytics service starting (event-driven mode)...")

@@ -6,11 +6,26 @@ other = "Validation failed"
 [ERR_BAD_REQUEST]
 other = "Bad request"
 
+[ERR_INVALID_URL]
+other = "Invalid URL"
+
+[ERR_INVALID_URL_FORMAT]
+other = "Invalid URL format"
+
+[ERR_INVALID_URL_SCHEME]
+other = "URL must use http or https scheme"
+
 [ERR_NOT_FOUND]
 other = "{{.Resource}} not found"
 
 [ERR_CONFLICT]
 other = "Conflict: {{.Message}}"
+
+[ERR_ALIAS_EXISTS]
+other = "Alias already exists"
+
+[ERR_EXPIRED]
+other = "{{.Resource}} has expired"
 
 [ERR_UNAUTHORIZED]
 other = "Unauthorized"
@@ -20,4 +35,7 @@ other = "Forbidden"
 
 [ERR_INTERNAL]
 other = "Internal server error"
+
+[ERR_SHORT_CODE_GENERATION]
+other = "Failed to generate unique short code after {{.Attempts}} attempts"
 

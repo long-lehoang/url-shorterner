@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"url-shorterner/internal/cache"
+	appErrors "url-shorterner/internal/errors"
 	eventsPublisher "url-shorterner/internal/events"
 	"url-shorterner/internal/storage"
 	"url-shorterner/internal/uuid"
@@ -117,10 +118,10 @@ func (s *service) Shorten(ctx context.Context, originalURL string, expiresIn *in
 		shortCode = *alias
 		exists, err := s.dao.CheckShortCodeExists(ctx, shortCode)
 		if err != nil {
-			return nil, fmt.Errorf("failed to check alias: %w", err)
+			return nil, appErrors.Invalid(appErrors.ErrCodeInternal, map[string]interface{}{"Message": "failed to check alias"})
 		}
 		if exists {
-			return nil, ErrAliasExists
+			return nil, appErrors.Conflict(appErrors.ErrCodeAliasExists, nil)
 		}
 	} else {
 		var err error
@@ -147,7 +148,7 @@ func (s *service) Shorten(ctx context.Context, originalURL string, expiresIn *in
 	}
 
 	if err := s.repo.CreateURL(ctx, urlEntity); err != nil {
-		return nil, fmt.Errorf("failed to create URL: %w", err)
+		return nil, appErrors.Invalid(appErrors.ErrCodeInternal, map[string]interface{}{"Message": "failed to create URL"})
 	}
 
 	s.bloomFilter.Add([]byte(shortCode))
@@ -193,7 +194,7 @@ func (s *service) ShortenBatch(ctx context.Context, items []BatchItem) ([]BatchR
 
 func (s *service) GetOriginalURL(ctx context.Context, shortCode string, clickInfo *ClickInfo) (string, error) {
 	if !s.bloomFilter.Test([]byte(shortCode)) {
-		return "", ErrURLNotFound
+		return "", appErrors.NotFound(appErrors.ResourceURL)
 	}
 
 	cachedURL, err := s.urlCache.GetURL(ctx, shortCode)
@@ -205,13 +206,13 @@ func (s *service) GetOriginalURL(ctx context.Context, shortCode string, clickInf
 	urlEntity, err := s.dao.GetURLByShortCode(ctx, shortCode)
 	if err != nil {
 		if errors.Is(err, storage.ErrNotFound) {
-			return "", ErrURLNotFound
+			return "", appErrors.NotFound(appErrors.ResourceURL)
 		}
-		return "", fmt.Errorf("failed to get URL: %w", err)
+		return "", appErrors.Invalid(appErrors.ErrCodeInternal, map[string]interface{}{"Message": "failed to get URL"})
 	}
 
 	if urlEntity.ExpiresAt != nil && time.Now().UTC().After(*urlEntity.ExpiresAt) {
-		return "", ErrURLExpired
+		return "", appErrors.Expired(appErrors.ErrCodeExpired, map[string]interface{}{"Resource": appErrors.ResourceURL})
 	}
 
 	var ttl time.Duration
@@ -255,22 +256,22 @@ func (s *service) generateUniqueShortCode(ctx context.Context) (string, error) {
 		code := generateShortCode(s.shortCodeLen)
 		exists, err := s.dao.CheckShortCodeExists(ctx, code)
 		if err != nil {
-			return "", fmt.Errorf("failed to check short code: %w", err)
+			return "", appErrors.Invalid(appErrors.ErrCodeInternal, map[string]interface{}{"Message": "failed to check short code"})
 		}
 		if !exists {
 			return code, nil
 		}
 	}
-	return "", fmt.Errorf("%w: after %d attempts", ErrShortCodeGeneration, maxAttempts)
+	return "", appErrors.Invalid(appErrors.ErrCodeShortCodeGeneration, map[string]interface{}{"Attempts": maxAttempts})
 }
 
 func validateURL(u string) error {
 	parsed, err := url.Parse(u)
 	if err != nil {
-		return ErrInvalidURLFormat
+		return appErrors.Invalid(appErrors.ErrCodeInvalidURLFormat, nil)
 	}
 	if parsed.Scheme != "http" && parsed.Scheme != "https" {
-		return ErrInvalidURLScheme
+		return appErrors.Invalid(appErrors.ErrCodeInvalidURLScheme, nil)
 	}
 	return nil
 }

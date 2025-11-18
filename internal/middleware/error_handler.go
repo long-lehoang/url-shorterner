@@ -2,11 +2,9 @@
 package middleware
 
 import (
-	"errors"
 	"net/http"
 
 	appErrors "url-shorterner/internal/errors"
-	"url-shorterner/svc/shortener/app"
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,6 +20,9 @@ func ErrorHandler() gin.HandlerFunc {
 		if len(c.Errors) > 0 {
 			err := c.Errors.Last().Err
 			if err != nil {
+				// Convert domain-specific errors to generic errors
+				err = appErrors.ConvertError(err)
+
 				status := mapErrorToStatus(err)
 				lang := appErrors.GetLanguageFromContext(c)
 
@@ -36,6 +37,7 @@ func ErrorHandler() gin.HandlerFunc {
 					if notFoundErr, ok := err.(*appErrors.NotFoundError); ok {
 						errorMsg = appErrors.GetMessage(code, lang, map[string]interface{}{"Resource": notFoundErr.Resource})
 					} else {
+						// For all other errors, use the code for translation
 						errorMsg = appErrors.GetMessage(code, lang)
 					}
 				} else {
@@ -61,31 +63,19 @@ func ErrorHandler() gin.HandlerFunc {
 	}
 }
 
-// mapErrorToStatus maps domain errors to HTTP status codes.
+// mapErrorToStatus maps errors to HTTP status codes using internal/errors.StatusCode.
+// Domain-specific errors should be converted to generic errors in the transport layer.
 func mapErrorToStatus(err error) int {
 	if err == nil {
 		return http.StatusOK
 	}
 
-	// Check for common HTTP error types from internal/errors
-	if status := appErrors.StatusCode(err); status != 500 {
+	// Use StatusCode from internal/errors which handles all error types
+	status := appErrors.StatusCode(err)
+	if status != 500 {
 		return status
 	}
 
-	// Map shortener domain errors
-	if errors.Is(err, app.ErrAliasExists) {
-		return http.StatusConflict
-	}
-	if errors.Is(err, app.ErrInvalidURL) || errors.Is(err, app.ErrInvalidURLFormat) || errors.Is(err, app.ErrInvalidURLScheme) {
-		return http.StatusBadRequest
-	}
-	if errors.Is(err, app.ErrURLNotFound) {
-		return http.StatusNotFound
-	}
-	if errors.Is(err, app.ErrURLExpired) {
-		return http.StatusGone
-	}
-
-	// Default to internal server error
+	// Default to internal server error for unknown errors
 	return http.StatusInternalServerError
 }

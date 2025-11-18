@@ -1,10 +1,14 @@
-// Package store provides DAO adapters for the analytics domain.
+// Package store provides DAO implementations for the analytics domain.
 package store
 
 import (
 	"context"
-	"url-shorterner/internal/storage"
+	"time"
+
 	"url-shorterner/svc/analytics/entity"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type DAO interface {
@@ -13,40 +17,76 @@ type DAO interface {
 }
 
 type dao struct {
-	storageDAO storage.DAO
+	db *pgxpool.Pool
 }
 
-func NewDAO(storageDAO storage.DAO) DAO {
-	return &dao{storageDAO: storageDAO}
+func NewDAO(db *pgxpool.Pool) DAO {
+	return &dao{db: db}
 }
 
 func (d *dao) GetAnalyticsByShortCode(ctx context.Context, shortCode string, limit int) ([]*entity.Record, error) {
-	storageRecords, err := d.storageDAO.GetAnalyticsByShortCode(ctx, shortCode, limit)
+	query := `
+		SELECT id, short_code, ip_address, user_agent, referer, clicked_at
+		FROM analytics
+		WHERE short_code = @short_code
+		ORDER BY clicked_at DESC
+		LIMIT @limit
+	`
+	args := pgx.NamedArgs{
+		"short_code": shortCode,
+		"limit":      limit,
+	}
+
+	rows, err := d.db.Query(ctx, query, args)
 	if err != nil {
 		return nil, err
 	}
-	records := make([]*entity.Record, 0, len(storageRecords))
-	for _, sr := range storageRecords {
-		records = append(records, &entity.Record{
-			ID:        sr.ID,
-			ShortCode: sr.ShortCode,
-			IPAddress: sr.IPAddress,
-			UserAgent: sr.UserAgent,
-			Referer:   sr.Referer,
-			ClickedAt: sr.ClickedAt,
-		})
+	defer rows.Close()
+
+	records := make([]*entity.Record, 0, limit)
+	for rows.Next() {
+		var record entity.Record
+		err := rows.Scan(
+			&record.ID,
+			&record.ShortCode,
+			&record.IPAddress,
+			&record.UserAgent,
+			&record.Referer,
+			&record.ClickedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		records = append(records, &record)
 	}
-	return records, nil
+
+	return records, rows.Err()
 }
 
 func (d *dao) GetAnalyticsStats(ctx context.Context, shortCode string) (*entity.Stats, error) {
-	storageStats, err := d.storageDAO.GetAnalyticsStats(ctx, shortCode)
+	query := `
+		SELECT 
+			COUNT(*) as total_clicks,
+			COUNT(DISTINCT ip_address) as unique_ips,
+			MAX(clicked_at) as last_click
+		FROM analytics
+		WHERE short_code = @short_code
+	`
+	args := pgx.NamedArgs{
+		"short_code": shortCode,
+	}
+
+	var stats entity.Stats
+	var lastClick *time.Time
+	err := d.db.QueryRow(ctx, query, args).Scan(
+		&stats.TotalClicks,
+		&stats.UniqueIPs,
+		&lastClick,
+	)
 	if err != nil {
 		return nil, err
 	}
-	return &entity.Stats{
-		TotalClicks: storageStats.TotalClicks,
-		UniqueIPs:   storageStats.UniqueIPs,
-		LastClick:   storageStats.LastClick,
-	}, nil
+
+	stats.LastClick = lastClick
+	return &stats, nil
 }

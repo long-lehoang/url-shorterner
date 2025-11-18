@@ -6,11 +6,26 @@ other = "Xác thực thất bại"
 [ERR_BAD_REQUEST]
 other = "Yêu cầu không hợp lệ"
 
+[ERR_INVALID_URL]
+other = "URL không hợp lệ"
+
+[ERR_INVALID_URL_FORMAT]
+other = "Định dạng URL không hợp lệ"
+
+[ERR_INVALID_URL_SCHEME]
+other = "URL phải sử dụng giao thức http hoặc https"
+
 [ERR_NOT_FOUND]
 other = "{{.Resource}} không tồn tại"
 
 [ERR_CONFLICT]
 other = "Xung đột: {{.Message}}"
+
+[ERR_ALIAS_EXISTS]
+other = "Bí danh đã tồn tại"
+
+[ERR_EXPIRED]
+other = "{{.Resource}} đã hết hạn"
 
 [ERR_UNAUTHORIZED]
 other = "Không được phép"
@@ -20,4 +35,7 @@ other = "Bị cấm"
 
 [ERR_INTERNAL]
 other = "Lỗi máy chủ"
+
+[ERR_SHORT_CODE_GENERATION]
+other = "Không thể tạo mã rút gọn duy nhất sau {{.Attempts}} lần thử"
 

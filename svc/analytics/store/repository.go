@@ -1,10 +1,13 @@
-// Package store provides repository adapters for the analytics domain.
+// Package store provides repository implementations for the analytics domain.
 package store
 
 import (
 	"context"
-	"url-shorterner/internal/storage"
+
 	"url-shorterner/svc/analytics/entity"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Repository interface {
@@ -12,21 +15,26 @@ type Repository interface {
 }
 
 type repository struct {
-	repo storage.Repository
+	db *pgxpool.Pool
 }
 
-func NewRepository(repo storage.Repository) Repository {
-	return &repository{repo: repo}
+func NewRepository(db *pgxpool.Pool) Repository {
+	return &repository{db: db}
 }
 
 func (r *repository) CreateAnalytics(ctx context.Context, record *entity.Record) error {
-	storageRecord := &storage.AnalyticsRecord{
-		ID:        record.ID,
-		ShortCode: record.ShortCode,
-		IPAddress: record.IPAddress,
-		UserAgent: record.UserAgent,
-		Referer:   record.Referer,
-		ClickedAt: record.ClickedAt,
+	query := `
+		INSERT INTO analytics (id, short_code, ip_address, user_agent, referer, clicked_at)
+		VALUES (@id, @short_code, @ip_address, @user_agent, @referer, @clicked_at)
+	`
+	args := pgx.NamedArgs{
+		"id":         record.ID,
+		"short_code": record.ShortCode,
+		"ip_address": record.IPAddress,
+		"user_agent": record.UserAgent,
+		"referer":    record.Referer,
+		"clicked_at": record.ClickedAt,
 	}
-	return r.repo.CreateAnalytics(ctx, storageRecord)
+	_, err := r.db.Exec(ctx, query, args)
+	return err
 }

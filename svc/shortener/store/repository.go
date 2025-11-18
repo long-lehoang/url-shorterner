@@ -1,10 +1,13 @@
-// Package store provides repository adapters for the shortener domain.
+// Package store provides repository implementations for the shortener domain.
 package store
 
 import (
 	"context"
-	"url-shorterner/internal/storage"
+
 	"url-shorterner/svc/shortener/entity"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Repository interface {
@@ -12,21 +15,26 @@ type Repository interface {
 }
 
 type repository struct {
-	repo storage.Repository
+	db *pgxpool.Pool
 }
 
-func NewRepository(repo storage.Repository) Repository {
-	return &repository{repo: repo}
+func NewRepository(db *pgxpool.Pool) Repository {
+	return &repository{db: db}
 }
 
 func (r *repository) CreateURL(ctx context.Context, url *entity.URL) error {
-	storageURL := &storage.URL{
-		ID:          url.ID,
-		ShortCode:   url.ShortCode,
-		OriginalURL: url.OriginalURL,
-		ExpiresAt:   url.ExpiresAt,
-		CreatedAt:   url.CreatedAt,
-		UpdatedAt:   url.UpdatedAt,
+	query := `
+		INSERT INTO urls (id, short_code, original_url, expires_at, created_at, updated_at)
+		VALUES (@id, @short_code, @original_url, @expires_at, @created_at, @updated_at)
+	`
+	args := pgx.NamedArgs{
+		"id":           url.ID,
+		"short_code":   url.ShortCode,
+		"original_url": url.OriginalURL,
+		"expires_at":   url.ExpiresAt,
+		"created_at":   url.CreatedAt,
+		"updated_at":   url.UpdatedAt,
 	}
-	return r.repo.CreateURL(ctx, storageURL)
+	_, err := r.db.Exec(ctx, query, args)
+	return err
 }
