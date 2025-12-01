@@ -7,6 +7,7 @@ import (
 )
 
 var (
+	// HTTPRequestsTotal counts the total number of HTTP requests.
 	HTTPRequestsTotal = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "http_request_total",
@@ -15,6 +16,7 @@ var (
 		[]string{"method", "endpoint", "status"},
 	)
 
+	// RedirectLatency measures the latency of redirect operations.
 	RedirectLatency = promauto.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Name:    "redirect_latency_seconds",
@@ -24,6 +26,7 @@ var (
 		[]string{"cache_hit"},
 	)
 
+	// CacheHitRatio tracks the cache hit ratio for different cache types.
 	CacheHitRatio = promauto.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "cache_hit_ratio",
@@ -32,6 +35,7 @@ var (
 		[]string{"type"},
 	)
 
+	// RateLimitBlockedTotal counts the total number of requests blocked by rate limiting.
 	RateLimitBlockedTotal = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "rate_limit_blocked_total",

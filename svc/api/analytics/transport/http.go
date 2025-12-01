@@ -44,6 +44,7 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
+// AnalyticsAPI defines the HTTP interface for analytics endpoints.
 type AnalyticsAPI interface {
 	// GetAnalytics retrieves comprehensive click analytics for a short code
 	//
@@ -109,6 +110,7 @@ type AnalyticsAPI interface {
 	GetAnalytics(*gin.Context)
 }
 
+// SetupRouter registers analytics API routes on the provided router.
 func SetupRouter(router *gin.Engine, service app.Service, limiter rate.Limiter) {
 	apiGroup := http.Router(router, "/", limiter)
 

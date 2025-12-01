@@ -9,6 +9,7 @@ import (
 	"url-shorterner/internal/cache"
 )
 
+// Limiter defines the interface for rate limiting.
 type Limiter interface {
 	Allow(ctx context.Context, identifier string) (bool, error)
 }
@@ -19,6 +20,7 @@ type limiter struct {
 	windowSize     time.Duration
 }
 
+// NewLimiter creates a new rate limiter instance.
 func NewLimiter(rateLimitCache *cache.RateLimitCache, maxRequests int, windowSize time.Duration) Limiter {
 	return &limiter{
 		rateLimitCache: rateLimitCache,

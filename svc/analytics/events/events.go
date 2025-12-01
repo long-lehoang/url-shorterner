@@ -3,6 +3,7 @@ package events
 
 import "time"
 
+// ClickEvent represents a click event for analytics tracking.
 type ClickEvent struct {
 	ShortCode string
 	IPAddress string

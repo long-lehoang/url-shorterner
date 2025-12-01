@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// NewDBPool creates a new database connection pool.
 func NewDBPool(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
 	config, err := pgxpool.ParseConfig(databaseURL)
 	if err != nil {
@@ -34,6 +35,7 @@ func NewDBPool(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
 	return pool, nil
 }
 
+// RunMigrations executes database migrations from the specified path.
 func RunMigrations(ctx context.Context, pool *pgxpool.Pool, migrationsPath string) error {
 	conn, err := pool.Acquire(ctx)
 	if err != nil {
@@ -89,7 +91,7 @@ func RunMigrations(ctx context.Context, pool *pgxpool.Pool, migrationsPath strin
 }
 
 func readMigrationFile(path string) (string, error) {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // G304: Migration file path is controlled and validated
 	if err != nil {
 		return "", err
 	}

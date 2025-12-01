@@ -1,3 +1,4 @@
+// Package main provides the entry point for database migration tool.
 package main
 
 import (
@@ -25,7 +26,7 @@ func main() {
 
 	wd, err := os.Getwd()
 	if err != nil {
-		log.Fatalf("Failed to get working directory: %v", err)
+		log.Fatalf("Failed to get working directory: %v", err) //nolint:gocritic // exitAfterDefer: intentional exit on fatal error
 	}
 
 	migrationsPath := wd + "/migrations"

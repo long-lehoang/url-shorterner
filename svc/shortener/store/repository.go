@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// Repository defines the interface for shortener write operations.
 type Repository interface {
 	CreateURL(ctx context.Context, url *entity.URL) error
 }
@@ -18,6 +19,7 @@ type repository struct {
 	db *pgxpool.Pool
 }
 
+// NewRepository creates a new shortener repository instance.
 func NewRepository(db *pgxpool.Pool) Repository {
 	return &repository{db: db}
 }

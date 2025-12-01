@@ -1,3 +1,4 @@
+// Package main provides the entry point for the analytics service.
 package main
 
 import (
@@ -30,7 +31,7 @@ func main() {
 
 	readerPool, err := storage.NewDBPool(ctx, cfg.DatabaseReaderURL)
 	if err != nil {
-		log.Fatalf("Failed to connect to reader database: %v", err)
+		log.Fatalf("Failed to connect to reader database: %v", err) //nolint:gocritic // exitAfterDefer: intentional exit on fatal error
 	}
 	defer readerPool.Close()
 

@@ -13,7 +13,7 @@ import (
 // Gin's validator already provides readable error messages, so we use them directly.
 func BindAndValidate(c *gin.Context, obj interface{}) bool {
 	if err := c.ShouldBindJSON(obj); err != nil {
-		c.Error(errors.NewValidationError(err.Error()))
+		c.Error(errors.NewValidationError(err.Error())) //nolint:errcheck // Error is handled by ErrorHandler middleware
 		c.Abort()
 		return false
 	}
@@ -23,7 +23,7 @@ func BindAndValidate(c *gin.Context, obj interface{}) bool {
 // BindQuery binds query parameters to a struct and validates it.
 func BindQuery(c *gin.Context, obj interface{}) bool {
 	if err := c.ShouldBindQuery(obj); err != nil {
-		c.Error(errors.NewValidationError(err.Error()))
+		c.Error(errors.NewValidationError(err.Error())) //nolint:errcheck // Error is handled by ErrorHandler middleware
 		c.Abort()
 		return false
 	}
@@ -33,7 +33,7 @@ func BindQuery(c *gin.Context, obj interface{}) bool {
 // BindURI binds URI parameters to a struct and validates it.
 func BindURI(c *gin.Context, obj interface{}) bool {
 	if err := c.ShouldBindUri(obj); err != nil {
-		c.Error(errors.NewValidationError(err.Error()))
+		c.Error(errors.NewValidationError(err.Error())) //nolint:errcheck // Error is handled by ErrorHandler middleware
 		c.Abort()
 		return false
 	}

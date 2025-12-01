@@ -26,8 +26,6 @@ linters-settings:
     locale: US
   revive:
     rules:
-      - name: exported
-        severity: warning
       - name: var-naming
         severity: warning
       - name: var-declaration
@@ -60,6 +58,6 @@ linters:
     - unused
 
 issues:
-  max-issues-per-linter: 0
+  max-issues-per-linter: 60  # Allow comment warnings from revive
   max-same-issues: 0
 

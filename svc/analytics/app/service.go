@@ -10,6 +10,7 @@ import (
 	analyticsStore "url-shorterner/svc/analytics/store"
 )
 
+// Service defines the interface for analytics operations.
 type Service interface {
 	RecordClick(ctx context.Context, shortCode, ipAddress, userAgent, referer string) error
 	GetAnalytics(ctx context.Context, shortCode string, limit int) ([]*entity.Record, error)
@@ -21,6 +22,7 @@ type service struct {
 	dao  analyticsStore.DAO
 }
 
+// NewService creates a new analytics service instance.
 func NewService(repo analyticsStore.Repository, dao analyticsStore.DAO) Service {
 	return &service{
 		repo: repo,

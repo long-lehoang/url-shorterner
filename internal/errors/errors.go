@@ -129,7 +129,7 @@ func (e *InvalidError) Error() string {
 	return string(e.Code)
 }
 
-// Code returns the error code for i18n translation.
+// GetCode returns the error code for i18n translation.
 func (e *InvalidError) GetCode() ErrorCode {
 	if e.Code != "" {
 		return e.Code
@@ -349,13 +349,9 @@ func ConvertError(err error) error {
 
 	switch errType {
 	case "*errors.InvalidError":
-		// Extract error code and data from InvalidError
+		// Extract error code from InvalidError
 		invalidErr := err.(*InvalidError)
 		code := invalidErr.GetCode()
-		data := invalidErr.Data
-		if data == nil {
-			data = make(map[string]interface{})
-		}
 		// Preserve the code for translation in handler, message will be ignored
 		return &ValidationError{
 			code:    code,

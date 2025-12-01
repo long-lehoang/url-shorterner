@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// Repository defines the interface for analytics write operations.
 type Repository interface {
 	CreateAnalytics(ctx context.Context, record *entity.Record) error
 }
@@ -18,6 +19,7 @@ type repository struct {
 	db *pgxpool.Pool
 }
 
+// NewRepository creates a new analytics repository instance.
 func NewRepository(db *pgxpool.Pool) Repository {
 	return &repository{db: db}
 }

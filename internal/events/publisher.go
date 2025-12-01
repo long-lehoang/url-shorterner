@@ -6,6 +6,7 @@ import (
 	"url-shorterner/svc/analytics/events"
 )
 
+// Publisher defines the interface for publishing events.
 type Publisher interface {
 	PublishClickEvent(ctx context.Context, event events.ClickEvent) error
 }

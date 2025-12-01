@@ -13,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// DAO defines the data access interface for shortener read operations.
 type DAO interface {
 	GetURLByShortCode(ctx context.Context, shortCode string) (*entity.URL, error)
 	CheckShortCodeExists(ctx context.Context, shortCode string) (bool, error)
@@ -22,6 +23,7 @@ type dao struct {
 	db *pgxpool.Pool
 }
 
+// NewDAO creates a new shortener DAO instance.
 func NewDAO(db *pgxpool.Pool) DAO {
 	return &dao{db: db}
 }

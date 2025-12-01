@@ -45,6 +45,7 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
+// ShortenerAPI defines the HTTP interface for URL shortening endpoints.
 type ShortenerAPI interface {
 	// Shorten creates a shortened URL with optional expiration and custom alias
 	//
@@ -204,6 +205,7 @@ type ShortenerAPI interface {
 	Redirect(*gin.Context)
 }
 
+// SetupRouter registers shortener API routes on the provided router.
 func SetupRouter(router *gin.Engine, service app.Service, limiter rate.Limiter) {
 	apiGroup := http.Router(router, "/", limiter)
 

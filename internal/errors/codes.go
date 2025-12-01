@@ -5,29 +5,36 @@ package errors
 type ErrorCode string
 
 const (
-	// Validation errors
-	ErrCodeValidation       ErrorCode = "ERR_VALIDATION"
-	ErrCodeBadRequest       ErrorCode = "ERR_BAD_REQUEST"
-	ErrCodeInvalidURL       ErrorCode = "ERR_INVALID_URL"
+	// ErrCodeValidation indicates a validation error.
+	ErrCodeValidation ErrorCode = "ERR_VALIDATION"
+	// ErrCodeBadRequest indicates a bad request error.
+	ErrCodeBadRequest ErrorCode = "ERR_BAD_REQUEST"
+	// ErrCodeInvalidURL indicates an invalid URL error.
+	ErrCodeInvalidURL ErrorCode = "ERR_INVALID_URL"
+	// ErrCodeInvalidURLFormat indicates an invalid URL format error.
 	ErrCodeInvalidURLFormat ErrorCode = "ERR_INVALID_URL_FORMAT"
+	// ErrCodeInvalidURLScheme indicates an invalid URL scheme error.
 	ErrCodeInvalidURLScheme ErrorCode = "ERR_INVALID_URL_SCHEME"
 
-	// Not found errors
+	// ErrCodeNotFound indicates a resource not found error.
 	ErrCodeNotFound ErrorCode = "ERR_NOT_FOUND"
 
-	// Conflict errors
-	ErrCodeConflict    ErrorCode = "ERR_CONFLICT"
+	// ErrCodeConflict indicates a conflict error.
+	ErrCodeConflict ErrorCode = "ERR_CONFLICT"
+	// ErrCodeAliasExists indicates that an alias already exists.
 	ErrCodeAliasExists ErrorCode = "ERR_ALIAS_EXISTS"
 
-	// Expired/Gone errors
+	// ErrCodeExpired indicates that a resource has expired.
 	ErrCodeExpired ErrorCode = "ERR_EXPIRED"
 
-	// Authentication/Authorization errors
+	// ErrCodeUnauthorized indicates an unauthorized access error.
 	ErrCodeUnauthorized ErrorCode = "ERR_UNAUTHORIZED"
-	ErrCodeForbidden    ErrorCode = "ERR_FORBIDDEN"
+	// ErrCodeForbidden indicates a forbidden access error.
+	ErrCodeForbidden ErrorCode = "ERR_FORBIDDEN"
 
-	// Internal errors
-	ErrCodeInternal            ErrorCode = "ERR_INTERNAL"
+	// ErrCodeInternal indicates an internal server error.
+	ErrCodeInternal ErrorCode = "ERR_INTERNAL"
+	// ErrCodeShortCodeGeneration indicates a failure to generate a unique short code.
 	ErrCodeShortCodeGeneration ErrorCode = "ERR_SHORT_CODE_GENERATION"
 )
 

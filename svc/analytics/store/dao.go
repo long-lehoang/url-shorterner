@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// DAO defines the data access interface for analytics read operations.
 type DAO interface {
 	GetAnalyticsByShortCode(ctx context.Context, shortCode string, limit int) ([]*entity.Record, error)
 	GetAnalyticsStats(ctx context.Context, shortCode string) (*entity.Stats, error)
@@ -20,6 +21,7 @@ type dao struct {
 	db *pgxpool.Pool
 }
 
+// NewDAO creates a new analytics DAO instance.
 func NewDAO(db *pgxpool.Pool) DAO {
 	return &dao{db: db}
 }

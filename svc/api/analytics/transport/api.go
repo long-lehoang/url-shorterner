@@ -15,6 +15,7 @@ type api struct {
 	service app.Service
 }
 
+// NewAnalyticsAPI creates a new analytics API handler instance.
 func NewAnalyticsAPI(service app.Service) AnalyticsAPI {
 	return &api{service: service}
 }
@@ -22,7 +23,7 @@ func NewAnalyticsAPI(service app.Service) AnalyticsAPI {
 func (a *api) GetAnalytics(c *gin.Context) {
 	shortCode := c.Param("code")
 	if shortCode == "" {
-		c.Error(errors.New("short code is required"))
+		c.Error(errors.New("short code is required")) //nolint:errcheck // Error is handled by ErrorHandler middleware
 		return
 	}
 
@@ -35,13 +36,13 @@ func (a *api) GetAnalytics(c *gin.Context) {
 
 	stats, err := a.service.GetStats(c.Request.Context(), shortCode)
 	if err != nil {
-		c.Error(err)
+		c.Error(err) //nolint:errcheck // Error is handled by ErrorHandler middleware
 		return
 	}
 
 	records, err := a.service.GetAnalytics(c.Request.Context(), shortCode, limit)
 	if err != nil {
-		c.Error(err)
+		c.Error(err) //nolint:errcheck // Error is handled by ErrorHandler middleware
 		return
 	}
 

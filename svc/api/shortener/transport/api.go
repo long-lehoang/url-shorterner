@@ -14,6 +14,7 @@ type api struct {
 	service app.Service
 }
 
+// NewShortenerAPI creates a new shortener API handler instance.
 func NewShortenerAPI(service app.Service) ShortenerAPI {
 	return &api{
 		service: service,
@@ -25,13 +26,13 @@ func NewShortenerAPI(service app.Service) ShortenerAPI {
 func (a *api) Shorten(c *gin.Context) {
 	var req ShortenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.Error(err)
+		c.Error(err) //nolint:errcheck // Error is handled by ErrorHandler middleware
 		return
 	}
 
 	resp, err := a.service.Shorten(c.Request.Context(), req.URL, req.ExpiresIn, req.Alias)
 	if err != nil {
-		c.Error(err)
+		c.Error(err) //nolint:errcheck // Error is handled by ErrorHandler middleware
 		return
 	}
 
@@ -43,13 +44,13 @@ func (a *api) Shorten(c *gin.Context) {
 func (a *api) ShortenBatch(c *gin.Context) {
 	var req BatchShortenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.Error(err)
+		c.Error(err) //nolint:errcheck // Error is handled by ErrorHandler middleware
 		return
 	}
 
 	results, err := a.service.ShortenBatch(c.Request.Context(), req.Items)
 	if err != nil {
-		c.Error(err)
+		c.Error(err) //nolint:errcheck // Error is handled by ErrorHandler middleware
 		return
 	}
 
@@ -61,7 +62,7 @@ func (a *api) ShortenBatch(c *gin.Context) {
 func (a *api) Redirect(c *gin.Context) {
 	shortCode := c.Param("code")
 	if shortCode == "" {
-		c.Error(errors.New("short code is required"))
+		c.Error(errors.New("short code is required")) //nolint:errcheck // Error is handled by ErrorHandler middleware
 		return
 	}
 
@@ -73,7 +74,7 @@ func (a *api) Redirect(c *gin.Context) {
 
 	originalURL, err := a.service.GetOriginalURL(c.Request.Context(), shortCode, clickInfo)
 	if err != nil {
-		c.Error(err)
+		c.Error(err) //nolint:errcheck // Error is handled by ErrorHandler middleware
 		return
 	}
 

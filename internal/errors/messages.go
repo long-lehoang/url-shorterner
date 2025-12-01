@@ -30,11 +30,19 @@ func GetMessage(code ErrorCode, lang Language, args ...interface{}) string {
 			templateData["Resource"] = args[0]
 		} else {
 			// Multiple arguments - try to map common patterns
-			for i, arg := range args {
-				if i == 0 {
-					templateData["Resource"] = arg
-				} else if i == 1 {
-					templateData["Message"] = arg
+			switch len(args) {
+			case 1:
+				templateData["Resource"] = args[0]
+			case 2:
+				templateData["Resource"] = args[0]
+				templateData["Message"] = args[1]
+			default:
+				// For more than 2 args, only use first two
+				if len(args) > 0 {
+					templateData["Resource"] = args[0]
+				}
+				if len(args) > 1 {
+					templateData["Message"] = args[1]
 				}
 			}
 		}

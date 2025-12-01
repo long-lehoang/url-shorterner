@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+// Config holds application configuration loaded from environment variables.
 type Config struct {
 	Port              int
 	DatabaseURL       string
@@ -22,6 +23,7 @@ type Config struct {
 	Domain            string
 }
 
+// Load reads configuration from environment variables and returns a Config instance.
 func Load() (*Config, error) {
 	databaseURL := getEnv("DATABASE_URL", "postgres://postgres:password@localhost:5432/shortener?sslmode=disable")
 
@@ -39,7 +41,7 @@ func Load() (*Config, error) {
 		ShortCodeLength:   getEnvInt("SHORT_CODE_LENGTH", 8),
 		RateLimitMax:      getEnvInt("RATE_LIMIT_MAX", 100),
 		RateLimitWindow:   time.Duration(getEnvInt("RATE_LIMIT_WINDOW_SECONDS", 60)) * time.Second,
-		BloomN:            uint(getEnvInt("BLOOM_N", 1000000)),
+		BloomN:            uint(getEnvInt("BLOOM_N", 1000000)), //nolint:gosec // G115: Bloom filter size is configurable and validated
 		BloomP:            getEnvFloat("BLOOM_P", 0.001),
 		Domain:            getEnv("DOMAIN", "http://localhost:8080"),
 	}

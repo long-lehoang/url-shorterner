@@ -8,16 +8,19 @@ import (
 	"url-shorterner/svc/analytics/events"
 )
 
+// EventHandlers handles analytics-related events.
 type EventHandlers struct {
 	service app.Service
 }
 
+// NewEventHandlers creates a new event handlers instance.
 func NewEventHandlers(service app.Service) *EventHandlers {
 	return &EventHandlers{
 		service: service,
 	}
 }
 
+// HandleClickEvent processes a click event and records it in analytics.
 func (h *EventHandlers) HandleClickEvent(ctx context.Context, event events.ClickEvent) error {
 	err := h.service.RecordClick(
 		ctx,

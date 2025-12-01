@@ -1,3 +1,4 @@
+// Package app provides the core business logic for URL shortening operations.
 package app
 
 import (
@@ -21,12 +22,14 @@ import (
 	"github.com/bits-and-blooms/bloom/v3"
 )
 
+// Service defines the interface for URL shortening operations.
 type Service interface {
 	Shorten(ctx context.Context, originalURL string, expiresIn *int, alias *string) (*ShortenResponse, error)
 	ShortenBatch(ctx context.Context, items []BatchItem) ([]BatchResult, error)
 	GetOriginalURL(ctx context.Context, shortCode string, clickInfo *ClickInfo) (string, error)
 }
 
+// ClickInfo contains information about a click event.
 type ClickInfo struct {
 	IPAddress string
 	UserAgent string
@@ -43,6 +46,7 @@ type service struct {
 	publisher    eventsPublisher.Publisher
 }
 
+// NewService creates a new URL shortening service instance.
 func NewService(
 	repo shortenerStore.Repository,
 	dao shortenerStore.DAO,
